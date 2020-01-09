@@ -70,21 +70,6 @@ def main():
             sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if ".gz" not in name and re.search(sample_pattern,name)]
 
         for sd in sample_dirs:
-            if output_modes["gsidcap"]:
-                target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
-            elif output_modes["gfal"]:
-                target_path = os.path.join(srm_server,main_output_directory,target_directory,sd,sd+".root")
-            elif output_modes["local"]:
-                target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
-
-            if output_modes["gsidcap"] or output_modes["gfal"]:
-                target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
-                gfalclient.mkdir_rec(target_directory_path,0755)
-            elif output_modes["local"]:
-                target_directory_path = os.path.join("/",main_output_directory,target_directory,sd)
-                if not os.path.exists(target_directory_path):
-                    os.makedirs(target_directory_path)
-
             sample_dir = os.path.join(input_directory,sd)
             if input_modes["xrootd"]:
                 s, dataset_listing = xrootdclient.dirlist(sample_dir, DirListFlags.STAT)
@@ -97,6 +82,21 @@ def main():
 
     tar = tarfile.open("merging.tar.gz","w:gz")
     for sd in dataset_dict:
+        if output_modes["gsidcap"]:
+            target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
+        elif output_modes["gfal"]:
+            target_path = os.path.join(srm_server,main_output_directory,target_directory,sd,sd+".root")
+        elif output_modes["local"]:
+            target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
+
+        if output_modes["gsidcap"] or output_modes["gfal"]:
+            target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
+            gfalclient.mkdir_rec(target_directory_path,0755)
+        elif output_modes["local"]:
+            target_directory_path = os.path.join("/",main_output_directory,target_directory,sd)
+            if not os.path.exists(target_directory_path):
+                os.makedirs(target_directory_path)
+
         print sd,"has files:",len(dataset_dict[sd])
         hadd_cmd = "hadd -f " + target_path + " " + " ".join(dataset_dict[sd])
         hadd_filename = "%s.sh"%sd
