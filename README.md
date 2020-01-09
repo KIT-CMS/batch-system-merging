@@ -74,7 +74,7 @@ then
 fi
 
 # In order to run locally, specify an appropriate number of cores (up to 10 is good)
-scripts/run_locally.ps --cores 5
+scripts/run_locally.py --cores 5
 ```
 
 ## Further notes
