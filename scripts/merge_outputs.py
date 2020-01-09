@@ -10,6 +10,12 @@ from XRootD import client
 from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode, StatInfoFlags
 import argparse
 
+def sorted_nicely(l):
+    """ Sort the given iterable in the way that humans expect: alphanumeric sort (in bash, that's 'sort -V')"""
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(l, key = alphanum_key)
+
 def nullable_string(val):
     if not val:
         return None
@@ -82,7 +88,7 @@ def main():
             dataset_dict[sd] += input_files
 
     tar = tarfile.open("merging.tar.gz","w:gz")
-    for sd in dataset_dict:
+    for sd in sorted_nicely(dataset_dict.keys()):
         if output_modes["gsidcap"]:
             target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
         elif output_modes["gfal"]:
@@ -108,7 +114,7 @@ def main():
         os.remove(hadd_filename)
     tar.close()
     with open("arguments.txt","w") as f:
-        f.write("\n".join(dataset_dict.keys()))
+        f.write("\n".join(sorted_nicely(dataset_dict.keys())))
         f.close()
 
 if __name__ == "__main__":
