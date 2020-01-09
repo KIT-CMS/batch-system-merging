@@ -12,7 +12,7 @@ import argparse
 def parseargs():
     parser = argparse.ArgumentParser(description='Small script to merge artus outputs from local or xrootd resources using multiprocessing.')
     parser.add_argument('--xrootd-server',default='root://cmsxrootd-kit.gridka.de/',help='xrootd server to access your input files and to create the output directory. Only used in xrootd mode. Default: %(default)s')
-    parser.add_argument('--srm-server',default='srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=',help='srm server path to create the output directory for your output files (the main path up to "user" directory). Only used in gfal2 mode. Default: %(default)s')
+    parser.add_argument('--srm-server',default='srm://cmssrm-kit.gridka.de/',help='srm server path to create the output directory for your output files (the main path up to "user" directory). Only used in gfal2 mode. Default: %(default)s')
     parser.add_argument('--dcap-server',default='gsidcap://cmsdcap-kit.gridka.de/',help='dcap server path to write your output files (the main path up to "user" directory). Only used in dcap mode. Default: %(default)s')
     parser.add_argument('--sample-directories', nargs='+', help='directory paths to the unmerged artus files. Directories should be given from the username on, e.g. "/aakhmets/artusjobs_Data_and_MC_2017_test_12_10_2017/". This option is required to be specified.',required=True)
     parser.add_argument('--main-input-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='input directory path on the machine or server to the "user" directory. Default: %(default)s')
