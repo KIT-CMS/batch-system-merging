@@ -7,7 +7,7 @@ import glob
 import gfal2
 import tarfile
 from XRootD import client
-from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode
+from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode, StatInfoFlags
 import argparse
 
 def nullable_string(val):
@@ -65,9 +65,10 @@ def main():
     for input_directory in input_directories:
         if input_modes["xrootd"]:
             status, listing = xrootdclient.dirlist(input_directory, DirListFlags.STAT)
-            sample_dirs = [ entry.name.strip("/") for entry in listing if ".gz" not in entry.name and re.search(sample_pattern,entry.name)]
+            print "Investigating via xrdfs:",os.path.join("/",input_directory)
+            sample_dirs = [ entry.name.strip("/") for entry in listing if (entry.statinfo.flags & StatInfoFlags.IS_DIR) and re.search(sample_pattern,entry.name)]
         elif input_modes["local"]:
-            sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if ".gz" not in name and re.search(sample_pattern,name)]
+            sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if os.path.isdir(name) and re.search(sample_pattern,name)]
 
         for sd in sample_dirs:
             sample_dir = os.path.join(input_directory,sd)
