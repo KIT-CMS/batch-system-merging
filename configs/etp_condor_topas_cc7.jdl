@@ -6,7 +6,7 @@ on_exit_hold = (ExitBySignal == True) || (ExitCode != 0)
 periodic_release =  (NumJobStarts < 3) && ((CurrentTime - EnteredCurrentStatus) > 600)
 requirements = (TARGET.ProvidesCPU == True) && (TARGET.ProvidesIO == True) && (TARGET.CLOUDSITE == "topas")
 +RemoteJob = True
-+RequestWalltime = 1800
++RequestWalltime = 10800
 +RequestMemory = 2000
 accounting_group = cms.higgs
 should_transfer_files = yes
