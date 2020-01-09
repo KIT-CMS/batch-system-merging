@@ -4,6 +4,7 @@
 import os
 import re
 import gfal2
+import tarfile
 from XRootD import client
 from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode
 import argparse
@@ -17,43 +18,52 @@ def parseargs():
     parser.add_argument('--main-input-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='input directory path on the machine or server to the "user" directory. Default: %(default)s')
     parser.add_argument('--main-output-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='output directory path on the machine or server to the "user" directory. Default: %(default)s')
     parser.add_argument('--target-directory',help='directory at you target srm server (from your username on) where the merged outputs should be written. This option is required to be specified.',required=True)
-    parser.add_argument('--sample-nick', help='Nickname of the sample to be processed. This option is required to be specified.',required=True)
 
     return parser.parse_args()
-
-
-
-def execute(cmd):
-    os.system(cmd)
 
 def main():
     args = parseargs()
     xrootd_server = args.xrootd_server.strip("/")
     srm_server = args.srm_server.strip("/")
     dcap_server = args.dcap_server.strip("/")
-    sample_nick = args.sample_nick
     main_input_directory = args.main_input_directory.strip("/")
     main_output_directory = args.main_output_directory.strip("/")
     sample_directories = [ d.strip("/") for d in args.sample_directories]
     target_directory = args.target_directory.strip("/")
 
-    target_path = os.path.join(dcap_server,main_output_directory,target_directory,sample_nick,sample_nick+".root")
-    target_directory_srm = os.path.join(srm_server,main_output_directory,target_directory,sample_nick)
-    input_directories = [ os.path.join(main_input_directory,sample_directory,sample_nick) for sample_directory in sample_directories]
-    input_files = []
+    input_directories = [ os.path.join(main_input_directory,sample_directory) for sample_directory in sample_directories]
 
     xrootdclient = client.FileSystem(xrootd_server)
     gfalclient = gfal2.creat_context()
-    gfalclient.mkdir_rec(target_directory_srm,0755)
+    dataset_dict = {}
     for input_directory in input_directories:
-        s, dataset_listing = xrootdclient.dirlist(input_directory, DirListFlags.STAT)
-        input_files += [os.path.join(xrootd_server,input_directory,entry.name) for entry in dataset_listing if ".root" in entry.name]
+        status, listing = xrootdclient.dirlist(input_directory, DirListFlags.STAT)
+        dataset_dirs = [ entry.name.strip("/") for entry in listing if ".gz" not in entry.name]
 
-    print sample_nick," has files:",len(input_files)
-    hadd_cmd = "hadd -f " + target_path + " " + " ".join(input_files)
-    with open("%s.sh"%sample_nick,"w") as f:
-        f.write(hadd_cmd)
-        #execute("source ./%s.sh"%sd)
+        for sd in dataset_dirs:
+            target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
+            target_directory_srm = os.path.join(srm_server,main_output_directory,target_directory,sd)
+            gfalclient.mkdir_rec(target_directory_srm,0755)
+            dataset_dir = os.path.join(input_directory,sd)
+            s, dataset_listing = xrootdclient.dirlist(dataset_dir, DirListFlags.STAT)
+            input_files = [os.path.join(xrootd_server,dataset_dir,entry.name) for entry in dataset_listing if ".root" in entry.name]
+            dataset_dict.setdefault(sd, [])
+            dataset_dict[sd] += input_files
+
+    tar = tarfile.open("merging.tar.gz","w:gz")
+    for sd in dataset_dict:
+        print sd,"has files:",len(dataset_dict[sd])
+        hadd_cmd = "hadd -f " + target_path + " " + " ".join(dataset_dict[sd])
+        hadd_filename = "%s.sh"%sd
+        with open(hadd_filename,"w") as f:
+            f.write(hadd_cmd)
+            f.close()
+        tar.add(hadd_filename)
+        os.remove(hadd_filename)
+    tar.close()
+    with open("arguments.txt","w") as f:
+        f.write("\n".join(dataset_dict.keys()))
+        f.close()
 
 if __name__ == "__main__":
     main()
