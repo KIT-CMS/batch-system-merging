@@ -8,5 +8,5 @@ then
     source /cvmfs/sft.cern.ch/lcg/views/LCG_96b/x86_64-slc6-gcc8-opt/setup.sh
 fi
 
-tar -zxvf merging.tar.gz
+tar -zxvf merging.tar.gz ${1}.sh
 bash ./${1}.sh
