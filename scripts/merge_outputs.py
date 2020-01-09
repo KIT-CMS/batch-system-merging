@@ -24,6 +24,7 @@ def parseargs():
     parser.add_argument('--main-input-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='input directory path on the machine or server to the "user" directory. Default: %(default)s')
     parser.add_argument('--main-output-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='output directory path on the machine or server to the "user" directory. Default: %(default)s')
     parser.add_argument('--target-directory',help='directory at you target srm server (from your username on) where the merged outputs should be written. This option is required to be specified.',required=True)
+    parser.add_argument('--match-to-sample-regex',default='.*',help='directory at you target srm server (from your username on) where the merged outputs should be written. Default: %(default)s')
 
     return parser.parse_args()
 
@@ -51,6 +52,7 @@ def main():
     main_input_directory = args.main_input_directory.strip("/")
     main_output_directory = args.main_output_directory.strip("/")
     sample_directories = [ d.strip("/") for d in args.sample_directories]
+    sample_pattern = args.match_to_sample_regex
     target_directory = args.target_directory.strip("/")
     input_directories = [ os.path.join(main_input_directory,sample_directory) for sample_directory in sample_directories]
 
@@ -63,9 +65,9 @@ def main():
     for input_directory in input_directories:
         if input_modes["xrootd"]:
             status, listing = xrootdclient.dirlist(input_directory, DirListFlags.STAT)
-            sample_dirs = [ entry.name.strip("/") for entry in listing if ".gz" not in entry.name]
+            sample_dirs = [ entry.name.strip("/") for entry in listing if ".gz" not in entry.name and re.search(sample_pattern,entry.name)]
         elif input_modes["local"]:
-            sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if ".gz" not in name]
+            sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if ".gz" not in name and re.search(sample_pattern,name)]
 
         for sd in sample_dirs:
             if output_modes["gsidcap"]:
