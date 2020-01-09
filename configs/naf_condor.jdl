@@ -10,6 +10,6 @@ requirements = (OpSysAndVer=="CentOS7" || OpSysAndVer=="SLC6")
 should_transfer_files = yes
 transfer_input_files = merging.tar.gz
 when_to_transfer_output = ON_EXIT
-transfer_output_files = "*.out,*.err"
+transfer_output_files = ""
 x509userproxy = $ENV(X509_USER_PROXY)
 queue arguments from arguments.txt
