@@ -14,7 +14,8 @@ def parseargs():
     parser.add_argument('--srm-server',default='srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=',help='srm server path to create the output directory for your output files (the main path up to "user" directory). Only used in gfal2 mode. Default: %(default)s')
     parser.add_argument('--dcap-server',default='gsidcap://cmsdcap-kit.gridka.de/',help='dcap server path to write your output files (the main path up to "user" directory). Only used in dcap mode. Default: %(default)s')
     parser.add_argument('--sample-directories', nargs='+', help='directory paths to the unmerged artus files. Directories should be given from the username on, e.g. "/aakhmets/artusjobs_Data_and_MC_2017_test_12_10_2017/". This option is required to be specified.',required=True)
-    parser.add_argument('--main-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='input directory path on the machine or server to the "user" directory. Default: %(default)s')
+    parser.add_argument('--main-input-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='input directory path on the machine or server to the "user" directory. Default: %(default)s')
+    parser.add_argument('--main-output-directory',default='/pnfs/gridka.de/cms/disk-only/store/user/',help='output directory path on the machine or server to the "user" directory. Default: %(default)s')
     parser.add_argument('--target-directory',help='directory at you target srm server (from your username on) where the merged outputs should be written. This option is required to be specified.',required=True)
     parser.add_argument('--sample-nick', help='Nickname of the sample to be processed. This option is required to be specified.',required=True)
 
@@ -31,13 +32,14 @@ def main():
     srm_server = args.srm_server.strip("/")
     dcap_server = args.dcap_server.strip("/")
     sample_nick = args.sample_nick
-    main_directory = args.main_directory.strip("/")
+    main_input_directory = args.main_input_directory.strip("/")
+    main_output_directory = args.main_output_directory.strip("/")
     sample_directories = [ d.strip("/") for d in args.sample_directories]
     target_directory = args.target_directory.strip("/")
 
-    target_path = os.path.join(dcap_server,main_directory,target_directory,sample_nick,sample_nick+".root")
-    target_directory_srm = os.path.join(srm_server,main_directory,target_directory,sample_nick)
-    input_directories = [ os.path.join(main_directory,sample_directory,sample_nick) for sample_directory in sample_directories]
+    target_path = os.path.join(dcap_server,main_output_directory,target_directory,sample_nick,sample_nick+".root")
+    target_directory_srm = os.path.join(srm_server,main_output_directory,target_directory,sample_nick)
+    input_directories = [ os.path.join(main_input_directory,sample_directory,sample_nick) for sample_directory in sample_directories]
     input_files = []
 
     xrootdclient = client.FileSystem(xrootd_server)
