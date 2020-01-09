@@ -25,7 +25,7 @@ scripts/merge_outputs.py \
                                 aakhmets/analysis_ntuples_mcmssm2018_et_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_em_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_24-12-2019 \
-           --target-directory /aakhmets/test/
+           --target-directory aakhmets/test/
 
 condor_submit configs/etp_condor_topas_cc7.jdl
 ```
