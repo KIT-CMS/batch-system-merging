@@ -1,6 +1,3 @@
 [submodule "grid-control"]
 	path = grid-control
 	url = git@github.com:KIT-CMS/grid-control.git
-[submodule "xrootd-python"]
-	path = xrootd-python
-	url = git@github.com:xrootd/xrootd-python.git
