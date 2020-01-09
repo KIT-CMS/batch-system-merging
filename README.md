@@ -62,7 +62,7 @@ scripts/merge_outputs.py \
            --xrootd-server "" \
            --main-input-directory /storage/gridka-nrg/ \
            --main-output-directory /ceph/akhmet/ \
-           --match-sample-to-regex 
+           --match-sample-to-regex "SUSY.*M900"
 
 # Source an appropriate environment depending on the machine. These lcg stacks work for the portal machines:
 if uname -a | grep -E 'el7' -q
