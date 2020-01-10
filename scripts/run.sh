@@ -1,9 +1,9 @@
 #!/bin/bash
 
-if uname -a | grep -E 'el7' -q
+if lsb_release --all | grep -E 'Distributor ID: CentOS' -q
 then
     source /cvmfs/sft.cern.ch/lcg/views/LCG_96b/x86_64-centos7-gcc9-opt/setup.sh
-elif uname -a | grep -E 'el6' -q
+elif lsb_release --lla | grep -E 'Distributor ID: ScientificCERNSLC' -q
 then
     source /cvmfs/sft.cern.ch/lcg/views/LCG_96b/x86_64-slc6-gcc8-opt/setup.sh
 fi
