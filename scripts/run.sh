@@ -1,10 +1,12 @@
 #!/bin/bash
 
-if lsb_release --all | grep -E 'Distributor ID: CentOS' -q
+if lsb_release --all | grep -E 'CentOS' -q
 then
+    echo "Found CentOS 7 distribution";
     source /cvmfs/sft.cern.ch/lcg/views/LCG_96b/x86_64-centos7-gcc9-opt/setup.sh
-elif lsb_release --all | grep -E 'Distributor ID: ScientificCERNSLC' -q
+elif lsb_release --all | grep -E 'ScientificCERNSLC' -q
 then
+    echo "Found SLC 6 distribution";
     source /cvmfs/sft.cern.ch/lcg/views/LCG_96b/x86_64-slc6-gcc8-opt/setup.sh
 fi
 
