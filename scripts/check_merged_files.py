@@ -14,8 +14,11 @@ import argparse
 def create_result_for_sample(info):
     print "\tProcessing:",info["sample"]
     result = {"sample" : info["sample"]}
-    result["n_events_expected"] = info["database"].get(info["sample"],-1)["n_events_generated"]
     F = R.TFile.Open(info["input_file"], "read")
+    if F.IsZombie() or F.TestBit(R.TFile.kRecovered):
+        F.Close()
+        return result
+    result["n_events_expected"] = info["database"].get(info["sample"],-1)["n_events_generated"]
     result["pipelines"] = sorted([k.GetName() for k in F.GetListOfKeys() if k.IsFolder()])
     for pattern in info["n_pipelines_expected"]:
         if re.search(pattern,info["sample"]):
@@ -48,6 +51,7 @@ def parseargs():
     parser.add_argument('--database',default='datasets/datasets.json',help='File in .json format with datasets info. Default: %(default)s')
     parser.add_argument('--match-to-sample-regex',default='.*',help='Regular expression to restrict the samples to be checked to. Default: %(default)s')
     parser.add_argument('--results',default=None,help='Already computed results to be examined. Default: %(default)s')
+    parser.add_argument('--parallel',default=5,type=int,help='Number of cores to be used to process the ROOT files. Default: %(default)s')
 
     return parser.parse_args()
 
@@ -58,6 +62,7 @@ def main():
     else:
         R.gROOT.SetBatch()
         R.gErrorIgnoreLevel = R.kError
+        p = Pool(args.parallel)
 
         xrootd_server = args.xrootd_server.strip("/") if args.xrootd_server else None
         input_modes = {
@@ -117,11 +122,13 @@ def main():
             else:
                 dataset_infos.append({"sample" : sd, "database" : database, "n_pipelines_expected" : n_pipelines_expected, "input_file" : dataset_dict[sd][0]})
 
-        results_list = []
-        for info in dataset_infos:
-            results_list.append(create_result_for_sample(info))
+        results_list = p.map(create_result_for_sample, dataset_infos)
         for r in results_list:
-            dataset_results[r.pop("sample")] = r
+            s = r.pop("sample")
+            if r != {}:
+                dataset_results[s] = r
+            else:
+                dataset_results[s] = None
 
         print "Dumping results into a .json file"
         json.dump(dataset_results,open("check_results.json","w"),sort_keys=True,indent=2)
@@ -133,7 +140,7 @@ def main():
     print "1. step: examining availability of the merged files."
     for s in sorted_nicely(dataset_results.keys()):
         if not dataset_results[s]:
-            print "\tNo or too many files found for sample:",s
+            print "\tNo correct or too many files found for sample:",s
             dataset_results.pop(s)
             no_files_list.append(s)
     print "2. step: examining number of pipelines in the merged files."
@@ -142,6 +149,7 @@ def main():
         found = len(dataset_results[s]["pipelines"])
         if exp != found:
             print "\tIncorrect number of pipelines for sample:",s,"exp =",exp,"found =",found
+            dataset_results.pop(s)
             incorrect_pipelines_list.append(s)
     print "3. step: examining number of events for each pipeline in the merged files. Deviations > 0.0001 considered as incorrect."
     for s in sorted_nicely(dataset_results.keys()):
