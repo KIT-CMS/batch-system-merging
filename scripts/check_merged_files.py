@@ -147,7 +147,6 @@ def main():
             no_files_list.append(s)
     print "2. step: examining number of pipelines in the merged files."
     for s in sorted_nicely(dataset_results.keys()):
-        print s
         exp = dataset_results[s]["n_pipelines_expected"]
         found = len(dataset_results[s]["pipelines"])
         if exp != found:
