@@ -24,6 +24,8 @@ def create_result_for_sample(info):
         if re.search(pattern,info["sample"]):
             result["n_pipelines_expected"] = info["n_pipelines_expected"][pattern]
             break
+        else:
+            result["n_pipelines_expected"] = -1
     for p in result["pipelines"]:
         cutflow = F.Get(p).Get("cutFlowUnweighted")
         if cutflow:
@@ -145,6 +147,7 @@ def main():
             no_files_list.append(s)
     print "2. step: examining number of pipelines in the merged files."
     for s in sorted_nicely(dataset_results.keys()):
+        print s
         exp = dataset_results[s]["n_pipelines_expected"]
         found = len(dataset_results[s]["pipelines"])
         if exp != found:
