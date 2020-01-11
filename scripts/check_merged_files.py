@@ -12,6 +12,7 @@ from XRootD.client.flags import DirListFlags, OpenFlags, MkDirFlags, QueryCode, 
 import argparse
 
 def create_result_for_sample(info):
+    print "\tProcessing:",info["sample"]
     result = {"sample" : info["sample"]}
     result["n_events_expected"] = info["database"].get(info["sample"],-1)["n_events_generated"]
     F = R.TFile.Open(info["input_file"], "read")
@@ -111,13 +112,11 @@ def main():
             dataset_dict[sd] += input_files
 
         for sd in sorted_nicely(dataset_dict.keys()):
-            print "\tProcessing:",sd
             if len(dataset_dict[sd]) != 1:
                 dataset_results[sd] = None
             else:
                 dataset_infos.append({"sample" : sd, "database" : database, "n_pipelines_expected" : n_pipelines_expected, "input_file" : dataset_dict[sd][0]})
 
-        print "Retrieving results from opened ROOT files"
         results_list = []
         for info in dataset_infos:
             results_list.append(create_result_for_sample(info))
