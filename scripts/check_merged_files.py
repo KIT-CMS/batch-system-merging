@@ -205,7 +205,7 @@ def main():
             for friend in dataset_results[s]["friends"]:
                 found = dataset_results[s]["friends"][friend][p]
                 if abs(found/exp - 1.0)  > 0.0001:
-                    if not (friend == "FakeFactors" and ("t_nominal" not in p and "tauEs" not in p) and "Run201" not in s):
+                    if not (friend == "FakeFactors" and ("t_nominal" not in p and "tauEs" not in p) and not "MuonEG" in s):
                         print "\tExamining sample:",s
                         print "\t\tExamining pipeline:",p
                         print "\t\t\t\tIncorrect number of events for friend:",friend,"exp =",exp,"found =",found,"ratio to exp =",found/exp
