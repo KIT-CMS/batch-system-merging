@@ -23,7 +23,8 @@ def nullable_string(val):
 
 def parseargs():
     parser = argparse.ArgumentParser(description='Small script to merge artus outputs from local or xrootd resources using multiprocessing.')
-    parser.add_argument('--xrootd-server',default='root://cmsxrootd-kit.gridka.de/',type=nullable_string,help='xrootd server to access your input files and to create the output directory. Only used in xrootd mode. Default: %(default)s')
+    parser.add_argument('--xrootd-input-server',default='root://cmsxrootd-kit.gridka.de/',type=nullable_string,help='xrootd server to access your input files and to create the output directory. Only used in xrootd mode. Default: %(default)s')
+    parser.add_argument('--xrootd-output-server',default='root://cmsxrootd-kit.gridka.de/',type=nullable_string,help='xrootd server to write your output files. Only used in xrootd mode. Default: %(default)s')
     parser.add_argument('--srm-server',default='srm://cmssrm-kit.gridka.de/',type=nullable_string,help='srm server path to create the output directory for your output files (the main path up to "user" directory). Only used in gfal2 mode. Default: %(default)s')
     parser.add_argument('--dcap-server',default='gsidcap://cmsdcap-kit.gridka.de/',type=nullable_string,help='dcap server path to write your output files (the main path up to "user" directory). Only used in dcap mode. Default: %(default)s')
     parser.add_argument('--sample-directories', nargs='+', help='directory paths to the unmerged artus files. Directories should be given from the username on, e.g. "/aakhmets/artusjobs_Data_and_MC_2017_test_12_10_2017/". This option is required to be specified.',required=True)
@@ -36,23 +37,32 @@ def parseargs():
 
 def main():
     args = parseargs()
-    xrootd_server = args.xrootd_server.strip("/") if args.xrootd_server else None
+    xrootd_input_server = args.xrootd_input_server.strip("/") if args.xrootd_input_server else None
+    xrootd_output_server = args.xrootd_output_server.strip("/") if args.xrootd_output_server else None
     srm_server = args.srm_server.strip("/") if args.srm_server else None
     dcap_server = args.dcap_server.strip("/") if args.dcap_server else None
 
     input_modes = {
-        "local" : not xrootd_server,
-        "xrootd" : xrootd_server,
+        "local" : not xrootd_input_server,
+        "xrootd" : xrootd_input_server,
     }
 
     output_modes = {
-        "gsidcap" : dcap_server and srm_server,
-        "gfal" : not dcap_server and srm_server,
-        "local" : not dcap_server and not srm_server,
-        "undefined" : dcap_server and not srm_server,
+        "xrootd" :        xrootd_output_server and not dcap_server and not srm_server,
+        "gsidcap" :   not xrootd_output_server and     dcap_server and     srm_server,
+        "gfal" :      not xrootd_output_server and not dcap_server and     srm_server,
+        "local" :     not xrootd_output_server and not dcap_server and not srm_server,
+        "undefined" :(    xrootd_output_server and     dcap_server and     srm_server) or
+                     (    xrootd_output_server and not dcap_server and     srm_server) or
+                     (    xrootd_output_server and     dcap_server and not srm_server) or
+                     (not xrootd_output_server and     dcap_server and not srm_server)
     }
     if output_modes["undefined"]:
-        print "Undefined output server constellation was chosen (dcap server given, but no srm server). Please specify srm server corresponding to the dcap server"
+        print "Undefined output server constellation was chosen. Possible constellations to be specified:"
+        print "\tgsidcap: srm & decap server of the same dCache, no xrootd output server"
+        print "\txrootd: xrootd output server, no srm & no dcap server"
+        print "\tgfal: srm server, no xrootd & no dcap server"
+        print "\tlocal: no srm, no dcap & no xrootd output server"
         exit(1)
 
     main_input_directory = args.main_input_directory.strip("/")
@@ -63,8 +73,10 @@ def main():
     input_directories = [ os.path.join(main_input_directory,sample_directory) for sample_directory in sample_directories]
 
     if input_modes["xrootd"]:
-        xrootdclient = client.FileSystem(xrootd_server)
-    if output_modes["gsidcap"] or output_modes["gfal"]:
+        xrootdclient = client.FileSystem(xrootd_input_server)
+    if output_modes["xrootd"]:
+        xrootdoutputclient = client.FileSystem(xrootd_output_server)
+    elif output_modes["gsidcap"] or output_modes["gfal"]:
         gfalclient = gfal2.creat_context()
 
     dataset_dict = {}
@@ -80,7 +92,7 @@ def main():
             sample_dir = os.path.join(input_directory,sd)
             if input_modes["xrootd"]:
                 s, dataset_listing = xrootdclient.dirlist(sample_dir, DirListFlags.STAT)
-                input_files = [os.path.join(xrootd_server,sample_dir,entry.name) for entry in dataset_listing if ".root" in entry.name]
+                input_files = [os.path.join(xrootd_input_server,sample_dir,entry.name) for entry in dataset_listing if ".root" in entry.name]
             elif input_modes["local"]:
                 input_files = glob.glob(os.path.join("/",sample_dir,"*.root"))
 
@@ -89,6 +101,8 @@ def main():
 
     tar = tarfile.open("merging.tar.gz","w:gz")
     for sd in sorted_nicely(dataset_dict.keys()):
+        if output_modes["xrootd"]:
+            target_path = os.path.join(xrootd_output_server,main_output_directory,target_directory,sd,sd+".root")
         if output_modes["gsidcap"]:
             target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
         elif output_modes["gfal"]:
@@ -97,7 +111,10 @@ def main():
         elif output_modes["local"]:
             target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
 
-        if output_modes["gsidcap"] or output_modes["gfal"]:
+        elif output_modes["xrootd"]:
+            target_directory_path = os.path.join(xroots_output_server,main_output_directory,target_directory,sd)
+            xrootdoutputclient.mkdir(target_directory_path, MkDirFlags.MAKEPATH)
+        elif output_modes["gsidcap"] or output_modes["gfal"]:
             target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
             gfalclient.mkdir_rec(target_directory_path,0755)
         elif output_modes["local"]:
