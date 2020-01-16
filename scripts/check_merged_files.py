@@ -190,24 +190,24 @@ def main():
             incorrect_pipelines_list.append(s)
     print "3. step: examining number of events for each pipeline in the merged files. Deviations > 0.0001 considered as incorrect."
     for s in sorted_nicely(dataset_results.keys()):
-        print "\tExamining sample:",s
         exp = float(dataset_results[s]["n_events_expected"])
         for p in dataset_results[s]["pipelines"]:
             found = dataset_results[s][p]
             if abs(found/exp - 1.0)  > 0.0001:
+                print "\tExamining sample:",s
                 print "\t\tIncorrect number of events for pipeline:",p,"exp =",exp,"found =",found,"ratio to exp =",found/exp
                 incorrect_nevents_dict.setdefault(s,[])
                 incorrect_nevents_dict[s].append(p)
     print "4. step: examining number of events for each pipeline in the friend files. Deviations > 0.0001 considered as incorrect."
     for s in sorted_nicely(dataset_results.keys()):
-        print "\tExamining sample:",s
         for p in dataset_results[s]["pipelines"]:
-            print "\t\tExamining pipeline:",p
             exp = dataset_results[s]["ntuple_tree_events"][p]
             for friend in dataset_results[s]["friends"]:
                 found = dataset_results[s]["friends"][friend][p]
                 if abs(found/exp - 1.0)  > 0.0001:
                     if not (friend == "FakeFactors" and ("t_nominal" not in p and "tauEs" not in p) and "Run201" not in s):
+                        print "\tExamining sample:",s
+                        print "\t\tExamining pipeline:",p
                         print "\t\t\t\tIncorrect number of events for friend:",friend,"exp =",exp,"found =",found,"ratio to exp =",found/exp
                         incorrect_friends_dict.setdefault(s,{})
                         incorrect_friends_dict.setdefault[s](p,[])

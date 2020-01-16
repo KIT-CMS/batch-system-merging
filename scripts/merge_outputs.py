@@ -48,19 +48,19 @@ def main():
     }
 
     output_modes = {
-        "xrootd" :        xrootd_output_server and not dcap_server and not srm_server,
+        "xrootd" :        xrootd_output_server and not dcap_server and     srm_server,
         "gsidcap" :   not xrootd_output_server and     dcap_server and     srm_server,
         "gfal" :      not xrootd_output_server and not dcap_server and     srm_server,
         "local" :     not xrootd_output_server and not dcap_server and not srm_server,
         "undefined" :(    xrootd_output_server and     dcap_server and     srm_server) or
-                     (    xrootd_output_server and not dcap_server and     srm_server) or
+                     (    xrootd_output_server and not dcap_server and not srm_server) or
                      (    xrootd_output_server and     dcap_server and not srm_server) or
                      (not xrootd_output_server and     dcap_server and not srm_server)
     }
     if output_modes["undefined"]:
         print "Undefined output server constellation was chosen. Possible constellations to be specified:"
         print "\tgsidcap: srm & decap server of the same dCache, no xrootd output server"
-        print "\txrootd: xrootd output server, no srm & no dcap server"
+        print "\txrootd: xrootd output & srm server of the same dCache, no dcap server"
         print "\tgfal: srm server, no xrootd & no dcap server"
         print "\tlocal: no srm, no dcap & no xrootd output server"
         exit(1)
@@ -74,9 +74,7 @@ def main():
 
     if input_modes["xrootd"]:
         xrootdclient = client.FileSystem(xrootd_input_server)
-    if output_modes["xrootd"]:
-        xrootdoutputclient = client.FileSystem(xrootd_output_server)
-    elif output_modes["gsidcap"] or output_modes["gfal"]:
+    if output_modes["gsidcap"] or output_modes["gfal"] or output_modes["xrootd"]:
         gfalclient = gfal2.creat_context()
 
     dataset_dict = {}
@@ -112,10 +110,7 @@ def main():
         elif output_modes["local"]:
             target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
 
-        elif output_modes["xrootd"]:
-            target_directory_path = os.path.join(xrootd_output_server,main_output_directory,target_directory,sd)
-            xrootdoutputclient.mkdir(target_directory_path, MkDirFlags.MAKEPATH)
-        elif output_modes["gsidcap"] or output_modes["gfal"]:
+        elif output_modes["gsidcap"] or output_modes["gfal"] or output_modes["xrootd"]:
             target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
             gfalclient.mkdir_rec(target_directory_path,0755)
         elif output_modes["local"]:
