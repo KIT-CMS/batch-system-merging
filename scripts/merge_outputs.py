@@ -112,7 +112,7 @@ def main():
             target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
 
         elif output_modes["xrootd"]:
-            target_directory_path = os.path.join(xroots_output_server,main_output_directory,target_directory,sd)
+            target_directory_path = os.path.join(xrootd_output_server,main_output_directory,target_directory,sd)
             xrootdoutputclient.mkdir(target_directory_path, MkDirFlags.MAKEPATH)
         elif output_modes["gsidcap"] or output_modes["gfal"]:
             target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
