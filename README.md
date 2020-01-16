@@ -16,7 +16,7 @@ voms-proxy-init --valid 192:00:00 --voms cms:/cms/dcms --rfc
 ## Merging examples
 In the following, examples are given for user `aakhmets/akhmet` on NAF/ETP and some specific folders with ntuples
 
-### Reading from GridKA dCache via xrootd, running on TOPAS, writing to GridKA dCache via dcap:
+### Reading from GridKA dCache via xrootd, running on TOPAS, writing to GridKA dCache via xrootd:
 
 ```[bash]
 scripts/merge_outputs.py \
@@ -25,6 +25,8 @@ scripts/merge_outputs.py \
                                 aakhmets/analysis_ntuples_mcmssm2018_et_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_em_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_24-12-2019 \
+           --srm-server "" \
+           --dcap-server "" \
            --target-directory aakhmets/test/
 
 condor_submit configs/etp_condor_topas_cc7.jdl
@@ -42,6 +44,7 @@ scripts/merge_outputs.py \
            --target-directory aakhmets/test/ \
            --srm-server srm://dcache-se-cms.desy.de/ \
            --dcap-server gsidcap://dcache-cms-dcap.desy.de/ \
+           --xrootd-output-server "" \
            --main-output-directory /pnfs/desy.de/cms/tier2/store/user/
 
 condor_submit configs/naf_condor.jdl
@@ -59,7 +62,8 @@ scripts/merge_outputs.py \
            --target-directory test/ \
            --srm-server "" \
            --dcap-server "" \
-           --xrootd-server "" \
+           --xrootd-input-server "" \
+           --xrootd-output-server "" \
            --main-input-directory /storage/gridka-nrg/ \
            --main-output-directory /ceph/akhmet/ \
            --match-to-sample-regex "SUSY.*M900"
