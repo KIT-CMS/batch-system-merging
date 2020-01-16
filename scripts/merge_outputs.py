@@ -127,7 +127,7 @@ def main():
         hadd_cmd = "hadd -f " + target_path + " " + " ".join(dataset_dict[sd])
         if output_modes["gfal"]:
             hadd_cmd += ";\ngfal-copy -f " + target_path + " " + target_remote_path
-        elif output_modes["xrootd"]
+        elif output_modes["xrootd"]:
             hadd_cmd += ";\nxrdcopy -f " + target_path + " " + target_remote_path
         hadd_filename = "%s.sh"%sd
         with open(hadd_filename,"w") as f:
