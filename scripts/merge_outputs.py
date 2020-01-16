@@ -102,7 +102,8 @@ def main():
     tar = tarfile.open("merging.tar.gz","w:gz")
     for sd in sorted_nicely(dataset_dict.keys()):
         if output_modes["xrootd"]:
-            target_path = os.path.join(xrootd_output_server,main_output_directory,target_directory,sd,sd+".root")
+            target_remote_path = os.path.join(xrootd_output_server,main_output_directory,target_directory,sd,sd+".root")
+            target_path = os.path.join(sd+".root")
         if output_modes["gsidcap"]:
             target_path = os.path.join(dcap_server,main_output_directory,target_directory,sd,sd+".root")
         elif output_modes["gfal"]:
@@ -126,6 +127,8 @@ def main():
         hadd_cmd = "hadd -f " + target_path + " " + " ".join(dataset_dict[sd])
         if output_modes["gfal"]:
             hadd_cmd += ";\ngfal-copy -f " + target_path + " " + target_remote_path
+        elif output_modes["xrootd"]
+            hadd_cmd += ";\nxrdcopy -f " + target_path + " " + target_remote_path
         hadd_filename = "%s.sh"%sd
         with open(hadd_filename,"w") as f:
             f.write(hadd_cmd)
