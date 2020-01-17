@@ -77,7 +77,7 @@ then
 fi
 
 # In order to run locally, specify an appropriate number of cores (up to 10 is good)
-scripts/run_locally.py --cores 5
+scripts/run_locally.py --parallel 5
 ```
 ## Checking merged ntuples with specified friends
 
