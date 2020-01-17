@@ -205,13 +205,13 @@ def main():
             for friend in dataset_results[s]["friends"]:
                 found = dataset_results[s]["friends"][friend][p]
                 if abs(found/exp - 1.0)  > 0.0001:
-                    if not (friend == "FakeFactors" and ("t_nominal" not in p and "tauEs" not in p) and not "MuonEG" in s):
+                    if not (friend == "FakeFactors" and (("t_nominal" not in p and "tauEs" not in p) or "MuonEG" in s)):
                         print "\tExamining sample:",s
                         print "\t\tExamining pipeline:",p
                         print "\t\t\t\tIncorrect number of events for friend:",friend,"exp =",exp,"found =",found,"ratio to exp =",found/exp
                         incorrect_friends_dict.setdefault(s,{})
-                        incorrect_friends_dict.setdefault[s](p,[])
-                        incorrect_friends_dict.append(friend)
+                        incorrect_friends_dict[s].setdefault(p,[])
+                        incorrect_friends_dict[s][p].append(friend)
 
     # Saving the examination:
     no_files = open("no_files.txt","w")
@@ -235,9 +235,9 @@ def main():
     to_write = ""
     for s in sorted_nicely(incorrect_friends_dict.keys()):
         to_write += s +"\n"
-        for p in sorted_nicely(incorrect_nevents_dict[s].keys()):
+        for p in sorted_nicely(incorrect_friends_dict[s].keys()):
             to_write += "\t" + p + "\n"
-            for f in incorrect_nevents_dict[s][p]:
+            for f in incorrect_friends_dict[s][p]:
                 to_write += "\t\t" + f + "\n"
     incorrect_friends.write(to_write.strip())
     incorrect_friends.close()
