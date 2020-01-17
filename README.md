@@ -49,7 +49,7 @@ scripts/merge_outputs.py \
 condor_submit configs/naf_condor.jdl
 ```
 
-### Reading from GridKA dCache via local mount on `bms1/2/3`, running locally on the portal machines `bms1/2/3`, writing directly to `/ceph`, restricted to a subset of datasets via regex:
+### Reading from GridKA dCache via local mount on `bms1/3`, running locally on the portal machines `bms1/3`, writing directly to `/ceph`, restricted to a subset of datasets via regex:
 
 ```[bash]
 scripts/merge_outputs.py \
