@@ -25,7 +25,6 @@ scripts/merge_outputs.py \
                                 aakhmets/analysis_ntuples_mcmssm2018_et_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_em_shifts_05-01-2020 \
                                 aakhmets/analysis_ntuples_mcmssm2018_24-12-2019 \
-           --srm-server "" \
            --dcap-server "" \
            --target-directory aakhmets/test/
 
@@ -79,6 +78,16 @@ fi
 
 # In order to run locally, specify an appropriate number of cores (up to 10 is good)
 scripts/run_locally.py --cores 5
+```
+## Checking merged ntuples with specified friends
+
+### Checking locally available ntuples for year 2017 with corresponding friends: MELA SVFit FakeFactors
+```bash
+scripts/check_merged_files.py --xrootd-server "" \
+                              --input-directory /ceph/htautau/deeptau_eoy/2017/ntuples/ \
+                              --input-friend-directories /ceph/htautau/deeptau_eoy/2017/friends/SVFit/ \                   
+                                                         /ceph/htautau/deeptau_eoy/2017/friends/MELA/ \ 
+                                                         /ceph/htautau/deeptau_eoy/2017/friends/FakeFactors/
 ```
 
 ## Further notes
