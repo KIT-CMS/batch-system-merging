@@ -32,14 +32,14 @@ def create_result_for_sample(info):
         ntuple = F.Get(p).Get("ntuple")
         if cutflow:
             result[p] = cutflow.GetBinContent(1) 
+            cutflow.Delete()
         else:
             result[p] = 0
         if ntuple:
             result["ntuple_tree_events"][p] = ntuple.GetEntries()
+            ntuple.Delete()
         else:
             result["ntuple_tree_events"][p] = 0
-        cutflow.Delete()
-        ntuple.Delete()
     F.Close()
     result["friends"] = {}
     for friend in info["input_friends"]:
@@ -81,6 +81,7 @@ def parseargs():
     parser.add_argument('--match-to-sample-regex',default='.*',help='Regular expression to restrict the samples to be checked to. Default: %(default)s')
     parser.add_argument('--results',default=None,help='Already computed results to be examined. Default: %(default)s')
     parser.add_argument('--parallel',default=5,type=int,help='Number of cores to be used to process the ROOT files. Default: %(default)s')
+    parser.add_argument('--check-modes',default=["file","pipelines","entryhist","friends"],nargs='+',choices=["file","pipelines","entryhist","entrytree","friends"],help='Number of cores to be used to process the ROOT files. Default: %(default)s')
 
     return parser.parse_args()
 
@@ -91,7 +92,8 @@ def main():
     else:
         R.gROOT.SetBatch()
         R.gErrorIgnoreLevel = R.kError
-        p = Pool(args.parallel)
+        if args.parallel > 1:
+            p = Pool(args.parallel)
 
         xrootd_server = args.xrootd_server.strip("/") if args.xrootd_server else None
         input_modes = {
@@ -158,7 +160,12 @@ def main():
             else:
                 dataset_infos.append({"sample" : sd, "database" : database, "n_pipelines_expected" : n_pipelines_expected, "input_file" : dataset_dict[sd][0], "input_friends" : friend_dict[sd]})
 
-        results_list = p.map(create_result_for_sample, dataset_infos)
+        if args.parallel > 1:
+            results_list = p.map(create_result_for_sample, dataset_infos)
+        else:
+            results_list = []
+            for info in dataset_infos:
+                results_list.append(create_result_for_sample(info))
         for r in results_list:
             s = r.pop("sample")
             if r != {}:
@@ -173,74 +180,114 @@ def main():
     no_files_list = []
     incorrect_pipelines_list = []
     incorrect_nevents_dict = {}
+    incorrect_nevents_from_tree_dict = {}
     incorrect_friends_dict = {}
-    print "1. step: examining availability of the merged files."
-    for s in sorted_nicely(dataset_results.keys()):
-        if not dataset_results[s]:
-            print "\tNo correct or too many files found for sample:",s
-            dataset_results.pop(s)
-            no_files_list.append(s)
-    print "2. step: examining number of pipelines in the merged files."
-    for s in sorted_nicely(dataset_results.keys()):
-        exp = dataset_results[s]["n_pipelines_expected"]
-        found = len(dataset_results[s]["pipelines"])
-        if exp != found:
-            print "\tIncorrect number of pipelines for sample:",s,"exp =",exp,"found =",found
-            dataset_results.pop(s)
-            incorrect_pipelines_list.append(s)
-    print "3. step: examining number of events for each pipeline in the merged files. Deviations > 0.0001 considered as incorrect."
-    for s in sorted_nicely(dataset_results.keys()):
-        exp = float(dataset_results[s]["n_events_expected"])
-        for p in dataset_results[s]["pipelines"]:
-            found = dataset_results[s][p]
-            if abs(found/exp - 1.0)  > 0.0001:
-                print "\tExamining sample:",s
-                print "\t\tIncorrect number of events for pipeline:",p,"exp =",exp,"found =",found,"ratio to exp =",found/exp
-                incorrect_nevents_dict.setdefault(s,[])
-                incorrect_nevents_dict[s].append(p)
-    print "4. step: examining number of events for each pipeline in the friend files. Deviations > 0.0001 considered as incorrect."
-    for s in sorted_nicely(dataset_results.keys()):
-        for p in dataset_results[s]["pipelines"]:
-            exp = dataset_results[s]["ntuple_tree_events"][p]
-            for friend in dataset_results[s]["friends"]:
-                found = dataset_results[s]["friends"][friend][p]
+    if "file" in args.check_modes:
+        print "1. step: examining availability of the merged files."
+        for s in sorted_nicely(dataset_results.keys()):
+            if not dataset_results[s]:
+                print "\tNo correct or too many files found for sample:",s
+                dataset_results.pop(s)
+                no_files_list.append(s)
+    else:
+        print "SKIPPING 1. step: examining availability of the merged files."
+    if "pipelines" in args.check_modes:
+        print "2. step: examining number of pipelines in the merged files."
+        for s in sorted_nicely(dataset_results.keys()):
+            exp = dataset_results[s]["n_pipelines_expected"]
+            found = len(dataset_results[s]["pipelines"])
+            if exp != found:
+                print "\tIncorrect number of pipelines for sample:",s,"exp =",exp,"found =",found
+                dataset_results.pop(s)
+                incorrect_pipelines_list.append(s)
+    else:
+        print "SKIPPING 2. step: examining number of pipelines in the merged files."
+    if "entryhist" in args.check_modes:
+        print "3. step: examining number of events for each pipeline in the merged files from cutflow histograms. Deviations > 0.0001 considered as incorrect."
+        for s in sorted_nicely(dataset_results.keys()):
+            exp = float(dataset_results[s]["n_events_expected"])
+            for p in dataset_results[s]["pipelines"]:
+                found = dataset_results[s][p]
                 if abs(found/exp - 1.0)  > 0.0001:
-                    if not (friend == "FakeFactors" and (("t_nominal" not in p and "tauEs" not in p) or "MuonEG" in s)):
-                        print "\tExamining sample:",s
-                        print "\t\tExamining pipeline:",p
-                        print "\t\t\t\tIncorrect number of events for friend:",friend,"exp =",exp,"found =",found,"ratio to exp =",found/exp
-                        incorrect_friends_dict.setdefault(s,{})
-                        incorrect_friends_dict[s].setdefault(p,[])
-                        incorrect_friends_dict[s][p].append(friend)
+                    print "\tExamining sample:",s
+                    print "\t\tIncorrect number of events for pipeline:",p,"exp =",exp,"found =",found,"ratio to exp =",found/exp
+                    incorrect_nevents_dict.setdefault(s,[])
+                    incorrect_nevents_dict[s].append(p)
+    else:
+        print "SKIPPING 3. step: examining number of events for each pipeline in the merged files from cutflow histograms."
+    if "friends" in args.check_modes:
+        print "4. step: examining number of events for each pipeline in the friend files. Deviations > 0.0001 considered as incorrect."
+        for s in sorted_nicely(dataset_results.keys()):
+            for p in dataset_results[s]["pipelines"]:
+                exp = dataset_results[s]["ntuple_tree_events"][p]
+                for friend in dataset_results[s]["friends"]:
+                    found = dataset_results[s]["friends"][friend][p]
+                    if abs(found/exp - 1.0)  > 0.0001:
+                        if not (friend == "FakeFactors" and (("t_nominal" not in p and "tauEs" not in p) or "MuonEG" in s)):
+                            print "\tExamining sample:",s
+                            print "\t\tExamining pipeline:",p
+                            print "\t\t\t\tIncorrect number of events for friend:",friend,"exp =",exp,"found =",found,"ratio to exp =",found/exp
+                            incorrect_friends_dict.setdefault(s,{})
+                            incorrect_friends_dict[s].setdefault(p,[])
+                            incorrect_friends_dict[s][p].append(friend)
+    else:
+        print "SKIPPING 4. step: examining number of events for each pipeline in the friend files."
+    if "entrytree" in args.check_modes:
+        print "3A. step: examining number of events for each pipeline in the merged files directly from tree, asuming, no selection was applied. Deviations > 0.0001 considered as incorrect."
+        for s in sorted_nicely(dataset_results.keys()):
+            exp = float(dataset_results[s]["n_events_expected"])
+            for p in dataset_results[s]["pipelines"]:
+                found = dataset_results[s]["ntuple_tree_events"][p]
+                if abs(found/exp - 1.0)  > 0.0001:
+                    print "\tExamining sample:",s
+                    print "\t\tIncorrect number of events for pipeline:",p,"exp =",exp,"found =",found,"ratio to exp =",found/exp
+                    incorrect_nevents_from_tree_dict.setdefault(s,[])
+                    incorrect_nevents_from_tree_dict[s].append(p)
+    else:
+        print "SKIPPING 3A. step: examining number of events for each pipeline in the merged files directly from tree, asuming, no selection was applied."
 
     # Saving the examination:
-    no_files = open("no_files.txt","w")
-    no_files.write("\n".join(no_files_list))
-    no_files.close()
+    if "file" in args.check_modes:
+        no_files = open("no_files.txt","w")
+        no_files.write("\n".join(no_files_list))
+        no_files.close()
 
-    incorrect_pipelines = open("incorrect_pipelines.txt","w")
-    incorrect_pipelines.write("\n".join(incorrect_pipelines_list))
-    incorrect_pipelines.close()
+    if "pipelines" in args.check_modes:
+        incorrect_pipelines = open("incorrect_pipelines.txt","w")
+        incorrect_pipelines.write("\n".join(incorrect_pipelines_list))
+        incorrect_pipelines.close()
 
-    incorrect_nevents = open("incorrect_nevents.txt","w")
-    to_write = ""
-    for s in sorted_nicely(incorrect_nevents_dict.keys()):
-        to_write += s +"\n"
-        for p in incorrect_nevents_dict[s]:
-            to_write += "\t" + p + "\n"
-    incorrect_nevents.write(to_write.strip())
-    incorrect_nevents.close()
+    if "entryhist" in args.check_modes:
+        incorrect_nevents = open("incorrect_nevents.txt","w")
+        to_write = ""
+        for s in sorted_nicely(incorrect_nevents_dict.keys()):
+            to_write += s +"\n"
+            for p in incorrect_nevents_dict[s]:
+                to_write += "\t" + p + "\n"
+        incorrect_nevents.write(to_write.strip())
+        incorrect_nevents.close()
 
-    incorrect_friends = open("incorrect_friends.txt","w")
-    to_write = ""
-    for s in sorted_nicely(incorrect_friends_dict.keys()):
-        to_write += s +"\n"
-        for p in sorted_nicely(incorrect_friends_dict[s].keys()):
-            to_write += "\t" + p + "\n"
-            for f in incorrect_friends_dict[s][p]:
-                to_write += "\t\t" + f + "\n"
-    incorrect_friends.write(to_write.strip())
-    incorrect_friends.close()
+    if "friends" in args.check_modes:
+        incorrect_friends = open("incorrect_friends.txt","w")
+        to_write = ""
+        for s in sorted_nicely(incorrect_friends_dict.keys()):
+            to_write += s +"\n"
+            for p in sorted_nicely(incorrect_friends_dict[s].keys()):
+                to_write += "\t" + p + "\n"
+                for f in incorrect_friends_dict[s][p]:
+                    to_write += "\t\t" + f + "\n"
+        incorrect_friends.write(to_write.strip())
+        incorrect_friends.close()
+
+    if "entrytree" in args.check_modes:
+        incorrect_nevents = open("incorrect_nevents_from_tree.txt","w")
+        to_write = ""
+        for s in sorted_nicely(incorrect_nevents_from_tree_dict.keys()):
+            to_write += s +"\n"
+            for p in incorrect_nevents_dict[s]:
+                to_write += "\t" + p + "\n"
+        incorrect_nevents.write(to_write.strip())
+        incorrect_nevents.close()
 
 if __name__ == "__main__":
     main()
