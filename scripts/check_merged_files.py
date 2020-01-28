@@ -81,7 +81,7 @@ def parseargs():
     parser.add_argument('--match-to-sample-regex',default='.*',help='Regular expression to restrict the samples to be checked to. Default: %(default)s')
     parser.add_argument('--results',default=None,help='Already computed results to be examined. Default: %(default)s')
     parser.add_argument('--parallel',default=5,type=int,help='Number of cores to be used to process the ROOT files. Default: %(default)s')
-    parser.add_argument('--check-modes',default=["file","pipelines","entryhist","friends"],nargs='+',choices=["file","pipelines","entryhist","entrytree","friends"],help='Number of cores to be used to process the ROOT files. Default: %(default)s')
+    parser.add_argument('--check-modes',default=["file","pipelines","entryhist","friends"],nargs='+',choices=["file","pipelines","entryhist","entrytree","friends"],help='Specification of checks to be done. Default: %(default)s')
 
     return parser.parse_args()
 
