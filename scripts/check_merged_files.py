@@ -284,7 +284,7 @@ def main():
         to_write = ""
         for s in sorted_nicely(incorrect_nevents_from_tree_dict.keys()):
             to_write += s +"\n"
-            for p in incorrect_nevents_dict[s]:
+            for p in incorrect_nevents_from_tree_dict[s]:
                 to_write += "\t" + p + "\n"
         incorrect_nevents.write(to_write.strip())
         incorrect_nevents.close()
