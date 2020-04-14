@@ -110,7 +110,7 @@ def main():
         elif output_modes["local"]:
             target_path = os.path.join("/",main_output_directory,target_directory,sd,sd+".root")
 
-        elif output_modes["gsidcap"] or output_modes["gfal"] or output_modes["xrootd"]:
+        if output_modes["gsidcap"] or output_modes["gfal"] or output_modes["xrootd"]:
             target_directory_path = os.path.join(srm_server,main_output_directory,target_directory,sd)
             gfalclient.mkdir_rec(target_directory_path,0755)
         elif output_modes["local"]:
