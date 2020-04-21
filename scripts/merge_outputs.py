@@ -85,6 +85,9 @@ def main():
             sample_dirs = [ entry.name.strip("/") for entry in listing if (entry.statinfo.flags & StatInfoFlags.IS_DIR) and re.search(sample_pattern,entry.name)]
         elif input_modes["local"]:
             sample_dirs = [os.path.basename(name).strip("/") for name in glob.glob(os.path.join("/",input_directory,"*")) if os.path.isdir(name) and re.search(sample_pattern,name)]
+            if len(sample_dirs) == 0:
+                print "[ERROR] No sample dir found for input input_directory %s. Aborting..." % input_directory
+                raise Exception
 
         for sd in sample_dirs:
             sample_dir = os.path.join(input_directory,sd)
@@ -93,6 +96,9 @@ def main():
                 input_files = [os.path.join(xrootd_input_server,sample_dir,entry.name) for entry in dataset_listing if ".root" in entry.name]
             elif input_modes["local"]:
                 input_files = glob.glob(os.path.join("/",sample_dir,"*.root"))
+                if len(input_files) == 0:
+                    print "[ERROR] No input file for path %s found. Aborting..." % sample_dir
+                    raise Exception
 
             dataset_dict.setdefault(sd, [])
             dataset_dict[sd] += input_files
