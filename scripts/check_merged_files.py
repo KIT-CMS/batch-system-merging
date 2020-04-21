@@ -127,7 +127,7 @@ def main():
             "ElMuFinalState" : 3,                                    # em + 2 Ele ES in embedding
             "DY.?Jets|EWKZ" : 184,                                   # bosonic MC w/o Z (next below) + 8 Ele->Tau ES + 4 Mu->Tau ES in Z boson MC
             "ttHJet|HTo(WW|TauTau)|W.?Jets|WG|EWKW" : 172,           # non-bosonic MC (next below) + 4 * 4 MET recoil in bosonic MC w/o Z
-            "ST.*top.*|TTTo|TT_|WW_|ZZ_|WZ_" : 156,                  # 4 channels + 3 * 8 Tau ES + 2 * 4 Ele ES + 4 * 4 btagging + 4 * 2 MET unclustered + 4 * 24 Jet ES/ER
+            "ST.*top.*|TTTo|TT_|WW_|ZZ_|WZ_|WWTo|ZZTo|WZTo|VVTo" : 156,                  # 4 channels + 3 * 8 Tau ES + 2 * 4 Ele ES + 4 * 4 btagging + 4 * 2 MET unclustered + 4 * 24 Jet ES/ER
         }
 
         print "Gathering infos from ROOT files"
