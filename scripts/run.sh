@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "HOSTNAMES of the node:"
+hostname -A
 echo "STEP 1: Setting environments and SW setup"
 if lsb_release --all | grep -E 'CentOS' -q
 then
