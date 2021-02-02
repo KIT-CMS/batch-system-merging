@@ -125,7 +125,18 @@ def main():
                 os.makedirs(target_directory_path)
 
         print sd,"has files:",len(dataset_dict[sd])
-        hadd_cmd = "hadd -f " + target_path + " " + " ".join(dataset_dict[sd])
+        step = 2000
+        indices_list = []
+        i = 0
+        while i * step < len(dataset_dict[sd]):
+            indices_list.append(i)
+            i+= 1
+        hadd_cmd = "rm -f " + target_path + ";\n"
+        for i in indices_list[:-1]:
+            #print "\t", i * step, (i + 1) * step
+            hadd_cmd += "hadd -a -f " + target_path + " " + " ".join(dataset_dict[sd][i * step:(i + 1) * step]) + ";\n"
+        #print "\t", indices_list[-1] * step
+        hadd_cmd += "hadd -a -f " + target_path + " " + " ".join(dataset_dict[sd][indices_list[-1] * step:])
         if output_modes["gfal"]:
             hadd_cmd += ";\ngfal-copy -f " + target_path + " " + target_remote_path
         elif output_modes["xrootd"]:
