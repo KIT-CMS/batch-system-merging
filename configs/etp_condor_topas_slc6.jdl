@@ -8,7 +8,7 @@ requirements = (TARGET.ProvidesCPU == True) && (TARGET.ProvidesIO == True) && (T
 +RemoteJob = True
 +RequestWalltime = 10800
 +RequestMemory = 2000
-+RequestDisk = 200000000
++RequestDisk = 20000000
 accounting_group = cms.higgs
 should_transfer_files = yes
 transfer_input_files = merging.tar.gz
