@@ -32,4 +32,5 @@ then
 fi
 
 tar -zxvf merging.tar.gz ${NICK}.sh
-bash ./${NICK}.sh
+time bash ./${NICK}.sh
+ls ${NICK}.root -lrth
